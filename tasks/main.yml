@@ -1,0 +1,86 @@
+---
+- name: Abort if not Ubuntu 12 or not 64-bit
+  fail:
+    msg: "This role is intended for use only with Ubuntu 12, 64-bit"
+  when: (ansible_architecture != 'x86_64') or ((ansible_distribution|lower != 'ubuntu') or (ansible_distribution_major_version != '12'))
+
+- name: Ensure /root/.aws/ is there
+  file:
+    path: '/root/.aws/'
+    state: 'directory'
+    mode: '0700'
+    owner: 'root'
+    group: 'root'
+
+- name: Add AWS CWA profile to /root/.aws/config
+  blockinfile:
+    path: '/root/.aws/config'
+    create: 'yes'
+    owner: 'root'
+    group: 'root'
+    mode: 0600
+    marker: "# {mark} ansible aws-cwa cfg"
+    block: |
+      [profile AmazonCloudWatchAgent]
+      output = json
+      region = {{aws_cwa_region|default('us-east-1')}}
+  notify: restart amazon-cloudwatch-agent
+
+- name: Add AWS CWA profile to /root/.aws/credentials
+  blockinfile:
+    path: '/root/.aws/credentials'
+    create: 'yes'
+    owner: 'root'
+    group: 'root'
+    mode: 0600
+    marker: "# {mark} ansible aws-cwa cfg"
+    block: |
+      [AmazonCloudWatchAgent]
+      aws_access_key_id={{aws_cwa_key_access}}
+      aws_secret_access_key={{aws_cwa_key_secret}}
+  notify: restart amazon-cloudwatch-agent
+
+- name: Already installed?
+  stat:
+    path: /opt/aws/amazon-cloudwatch-agent
+  register: already_inst
+
+- block:
+  - name: make temp dir for installation files
+    file:
+      path: "/tmp/aws-cwa-inst"
+      state: "directory"
+  - name: download & unpack the latest cloudwatch agent .zip
+    unarchive:
+      remote_src: "yes"
+      src: "https://s3.amazonaws.com/amazoncloudwatch-agent/linux/amd64/latest/AmazonCloudWatchAgent.zip"
+      dest: "/tmp/aws-cwa-inst/"
+  - name: run the installer
+    shell: cd /tmp/aws-cwa-inst && ./install.sh
+    notify: restart amazon-cloudwatch-agent
+  - name: remove temp dir
+    file:
+      path: "/tmp/aws-cwa-inst/"
+      state: "absent"
+  when: already_inst.stat.exists != True
+
+- name: place cfgs, ie. amazon-cloudwatch-agent.(json|toml)
+  template:
+    src: "{{ item }}"
+    dest: "/opt/aws/amazon-cloudwatch-agent/etc/{{ item | basename | regex_replace('\\.j2$', '') }}"
+    mode: 0644
+  with_fileglob:
+  - "{{aws_cwa_cfgs}}/*.j2"
+  notify: restart amazon-cloudwatch-agent
+
+- name: update start-amazon-cloudwatch-agent with our version (which avoids overwriting the toml)
+  copy:
+    src: "start-amazon-cloudwatch-agent"
+    dest: "/opt/aws/amazon-cloudwatch-agent/bin/start-amazon-cloudwatch-agent"
+    mode: 0755
+  notify: restart amazon-cloudwatch-agent
+
+- name: enable service on boot
+  service:
+    name: "amazon-cloudwatch-agent"
+    enabled: "yes"
