@@ -61,7 +61,10 @@ Example Dir Structure
         │   └── main.yml
         ├── README.md
         └── tasks
-            └── main.yml
+            ├── main.yml
+            ├── ubuntu-12.yml
+            ├── ubuntu-14.yml
+            └── ubuntu-16.yml
 ```
 
 

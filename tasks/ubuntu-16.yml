@@ -1,9 +1,4 @@
 ---
-- name: Abort if not Ubuntu 16 or not 64-bit
-  fail:
-    msg: "This role is intended for use only with Ubuntu 16, 64-bit"
-  when: (ansible_architecture != 'x86_64') or ((ansible_distribution|lower != 'ubuntu') or (ansible_distribution_major_version != '16'))
-
 - name: Ensure /root/.aws/ is there
   file:
     path: '/root/.aws/'
@@ -84,3 +79,17 @@
   service:
     name: "amazon-cloudwatch-agent"
     enabled: "yes"
+
+- name: Add log rotation for amazon-cloudwatch-agent.log
+  copy:
+    dest: '/etc/logrotate.d/aws-cwa'
+    owner: 'root'
+    group: 'root'
+    content: |
+        /opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log {
+            daily
+            rotate 7
+            compress
+            missingok
+            copytruncate
+        }
