@@ -1,7 +1,7 @@
-ansible-role-amazon-cloudwatch-agent_ubuntu12
+ansible-role-amazon-cloudwatch-agent
 ======
 
-This role will install the AWS CloudWatch Agent on Ubuntu 12.
+This role will install the AWS CloudWatch Agent on Ubuntu (64-bit, precise/trusty/xenial).
 - config and credentials are stored in /root/.aws/
 - the process runs as root
 - in the configs, `amazon-cloudwatch-agent.json` effectively does nothing.  The .toml config was generated from the .json, but in our case the .toml contains some extra tweaks that cannot be added in the .json -- so, the purpose of the .json file is to stand as a reference for the .toml, and should be kept up-to-date in case a new .toml needs to be generated (and then tweaked)
@@ -36,7 +36,7 @@ Example Playbook
     aws_cwa_namespace: 'your-metric-namespace'
     aws_cwa_cfgs: 'group_files/awscwa_cfg/webserver-stg/'
   roles:
-  - ansible-role-cloudwatch-agent_ubuntu12
+  - ansible-role-amazon-cloudwatch-agent
 
 ```
 
@@ -54,7 +54,7 @@ Example Dir Structure
 ├── inventory
 ├── main.yml
 └── roles
-    └── ansible-role-cloudwatch-agent_ubuntu12
+    └── ansible-role-amazon-cloudwatch-agent
         ├── files
         │   └── start-amazon-cloudwatch-agent
         ├── handlers
