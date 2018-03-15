@@ -87,8 +87,8 @@
     group: 'root'
     content: |
         /opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log {
-            daily
-            rotate 7
+            size 50M
+            rotate 5
             compress
             missingok
             copytruncate
