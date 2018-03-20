@@ -1,0 +1,4 @@
+---
+aws_cwa_region: 'us-east-1'
+aws_cwa_disk_monitor_paths:
+  - "/"

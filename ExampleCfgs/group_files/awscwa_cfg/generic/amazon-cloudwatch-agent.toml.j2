@@ -1,0 +1,79 @@
+[agent]
+  collection_jitter = "0s"
+  debug = false
+  flush_interval = "1s"
+  flush_jitter = "0s"
+  hostname = ""
+  interval = "60s"
+  logfile = "/opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log"
+  metric_batch_size = 1000
+  metric_buffer_limit = 10000
+  omit_hostname = false
+  precision = ""
+  quiet = false
+  round_interval = false
+
+[inputs]
+
+  [[inputs.cpu]]
+    collect_cpu_time = false
+    fieldpass = ["usage_idle"]
+    interval = "60s"
+    percpu = false
+    totalcpu = true
+
+  [[inputs.disk]]
+    fieldpass = ["used_percent"]
+    interval = "60s"
+    mount_points = [{% for p in aws_cwa_disk_monitor_paths %}"{{p}}"{% if not loop.last %}, {%endif%}{%endfor%}]
+
+  [[inputs.mem]]
+    fieldpass = ["used_percent"]
+    interval = "60s"
+
+{% if aws_cwa_logfiles|length > 0 %}
+  [[inputs.tail]]
+    data_format = "value"
+    data_type = "string"
+    file_state_folder = "/opt/aws/amazon-cloudwatch-agent/logs/state"
+    name_override = "raw_log_line"
+
+{% for logfile in aws_cwa_logfiles %}
+    [[inputs.tail.file_config]]
+      file_path = "{{logfile.file_path}}"
+      from_beginning = true
+      log_group_name = "{{logfile.log_group_name}}"
+      log_stream_name = "{{logfile.log_stream_name}}"
+      multi_line_start_pattern = "{timestamp_regex}"
+      pipe = false
+      timestamp_layout = "{{logfile.timestamp_layout}}"
+      timestamp_regex = "{{logfile.timestamp_regex}}"
+      timezone = "{{logfile.timezone}}"
+
+{% endfor %}
+{% endif %}
+
+[outputs]
+
+  [[outputs.cloudwatch]]
+    force_flush_interval = "60s"
+    namespace = "{{aws_cwa_namespace}}"
+    profile = "AmazonCloudWatchAgent"
+    region = "{{aws_cwa_region}}"
+    shared_credential_file = "/root/.aws/credentials"
+    [outputs.cloudwatch.tagdrop]
+      log_group_name = ["*"]
+
+  [[outputs.cloudwatchlogs]]
+    file_name_field_key = "file_name"
+    file_state_folder = "/opt/aws/amazon-cloudwatch-agent/logs/state"
+    log_entry_field_key = "value"
+    log_group_name_tag_key = "log_group_name"
+    log_stream_name = "{{ansible_hostname}}"
+    log_stream_name_tag_key = "log_stream_name"
+    log_timestamp_field_key = "log_timestamp"
+    multi_line_start_field_key = "multi_line_start"
+    offset_field_key = "offset"
+    profile = "AmazonCloudWatchAgent"
+    region = "{{aws_cwa_region}}"
+    shared_credential_file = "/root/.aws/credentials"
