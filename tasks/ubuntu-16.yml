@@ -102,7 +102,7 @@
 
 - name: ensure log groups and retention policies exist
   shell: |
-    aws --profile AmazonCloudWatchAgent logs create-log-group --log-group-name {{item.log_group_name}}
+    aws --profile AmazonCloudWatchAgent logs create-log-group --log-group-name {{item.log_group_name}}{% if item.log_group_tags is defined and item.log_group_tags|length > 0 %} --tags {% for lgti in item.log_group_tags %}{% for tK in lgti %}{{tK}}={{ lgti[ tK ] }}{% endfor %}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}{{ "" }}
     {% if item.log_retention|default('') != '' %}
     aws --profile AmazonCloudWatchAgent logs put-retention-policy --log-group-name {{item.log_group_name}} --retention-in-days {{item.log_retention}}
     {% endif %}
