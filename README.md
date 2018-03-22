@@ -14,13 +14,25 @@ Variables
 ```
 aws_cwa_region             - (Optional) AWS region.  Defaults to "us-east-1"
 aws_cwa_namespace          - The namespace in which your metrics will reside (e.g. 'myApplication')
-aws_cwa_logfiles           - (Optional) List of logfiles that you wish to monitor, and their associated parameters
-aws_cwa_disk_monitor_paths - (Optional) List of paths (i.e. different partitions) that you wish to monitor for space.  Defaults to "/"
+aws_cwa_logfiles           - (Optional) List of logfiles that you wish to monitor, and their associated parameters -- for example:
+  - file_path: '/var/log/syslog'
+    log_group_name: 'log_group_name_goes_here'
+    log_group_tags:
+      - TagKey: TagValue
+    log_stream_name: '{{ansible_hostname}}/log_stream_name'
+    log_retention: '7'
+    timestamp_format: '%b %-d %H:%M:%S'
+    timestamp_layout: 'Jan 2 15:04:05'
+    timestamp_regex: '^(\\w{3}\\s+\\d{1,2} \\d{2}:\\d{2}:\\d{2}).*$'
+    timezone: 'LOCAL'
+aws_cwa_disk_monitor_paths - (Optional) List of paths (i.e. different partitions) that you wish to monitor for space.  Defaults to "/".  For example:
+  - "/"
+  - "/opt"
 aws_cwa_key_access         - AWS access key
 aws_cwa_key_secret         - AWS secret key
 aws_cwa_cfgs               - Path (absolute, or relative to playbook) containing the .j2 templates for the CloudWatch Agent configs
                                 NOTE: These must be templates, as they necessarily contain {{ansible_hostname}}
-                                Only files with the .j2 extension will be processed; the '.j2' will be removed
+                                Only files with the .j2 extension will be processed.  The '.j2' extension will be removed.
 ```
 
 It's recommended that you declare `aws_cwa_key_access` and `aws_cwa_key_secret` in either a vault-encypted var file, or as vault-encrypted strings within a var file.
@@ -41,6 +53,7 @@ Example Playbook
 ```
 
 Example Dir Structure
+------
 
 ```
 .
@@ -66,7 +79,6 @@ Example Dir Structure
             ├── ubuntu-14.yml
             └── ubuntu-16.yml
 ```
-
 
 Author Information
 ------
