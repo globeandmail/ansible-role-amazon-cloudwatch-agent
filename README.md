@@ -8,6 +8,7 @@ This role will install the AWS CloudWatch Agent on Ubuntu (64-bit, precise/trust
 
 *See the subdir "ExampleCfgs" for an example of how to configure this role.*
 
+
 Variables
 ------
 
@@ -37,6 +38,7 @@ aws_cwa_cfgs               - Path (absolute, or relative to playbook) containing
 
 It's recommended that you declare `aws_cwa_key_access` and `aws_cwa_key_secret` in either a vault-encypted var file, or as vault-encrypted strings within a var file.
 
+Omitting the "log_retention" attribute will result in the associated log group having its retention policy, if any, deleted (i.e. 'Never Expire')
 
 
 Example Playbook
@@ -51,6 +53,7 @@ Example Playbook
   - ansible-role-amazon-cloudwatch-agent
 
 ```
+
 
 Example Dir Structure
 ------
@@ -79,6 +82,7 @@ Example Dir Structure
             ├── ubuntu-14.yml
             └── ubuntu-16.yml
 ```
+
 
 Author Information
 ------

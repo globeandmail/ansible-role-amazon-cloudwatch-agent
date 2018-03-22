@@ -100,17 +100,28 @@
       state: 'absent'
   when: awscli_installed.stat.exists != True
 
-- name: ensure log groups and retention policies exist
+- name: ensure log groups exist
   shell: |
     aws --profile AmazonCloudWatchAgent logs create-log-group --log-group-name {{item.log_group_name}}{% if item.log_group_tags is defined and item.log_group_tags|length > 0 %} --tags {% for lgti in item.log_group_tags %}{% for tK in lgti %}{{tK}}={{ lgti[ tK ] }}{% endfor %}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}{{ "" }}
+  args:
+    executable: '/bin/bash'
+  register: create_log_groups
+  with_items: "{{ aws_cwa_logfiles | default([]) }}"
+  failed_when: create_log_groups.rc != 0 and create_log_groups.rc != 255
+
+- name: ensure retention policies are up to date
+  shell: |
     {% if item.log_retention|default('') != '' %}
     aws --profile AmazonCloudWatchAgent logs put-retention-policy --log-group-name {{item.log_group_name}} --retention-in-days {{item.log_retention}}
+    {% else %}
+    aws --profile AmazonCloudWatchAgent logs delete-retention-policy --log-group-name {{item.log_group_name}}
     {% endif %}
   args:
     executable: '/bin/bash'
   register: create_log_groups
   with_items: "{{ aws_cwa_logfiles | default([]) }}"
   failed_when: create_log_groups.rc != 0 and create_log_groups.rc != 255
+
 
 - name: update start-amazon-cloudwatch-agent with our version (which avoids overwriting the toml)
   copy:
