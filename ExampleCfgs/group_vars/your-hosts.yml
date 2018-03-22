@@ -7,6 +7,9 @@ aws_cwa_disk_monitor_paths:
 aws_cwa_logfiles:
   - file_path: '/var/log/syslog'
     log_group_name: 'system-logs'
+    log_group_tags:
+      - TagKey: TagValue
+      - AnotherTag: AnotherValue
     log_stream_name: '{{ansible_hostname}}/syslog'
     log_retention: '14'
     timestamp_format: '%b %-d %H:%M:%S'
