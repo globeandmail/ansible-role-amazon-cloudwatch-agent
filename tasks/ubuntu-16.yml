@@ -34,6 +34,7 @@
       aws_access_key_id={{aws_cwa_key_access}}
       aws_secret_access_key={{aws_cwa_key_secret}}
   notify: restart amazon-cloudwatch-agent
+  no_log: True
 
 - name: Already installed?
   stat:
@@ -58,6 +59,7 @@
       path: "/tmp/aws-cwa-inst/"
       state: "absent"
   when: already_inst.stat.exists != True
+  ignore_errors: "{{ ansible_check_mode }}"
 
 - name: place cfgs, ie. amazon-cloudwatch-agent.(json|toml)
   template:
