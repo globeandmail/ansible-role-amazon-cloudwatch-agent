@@ -13,13 +13,13 @@ Variables
 ------
 
 ### aws_cwa_region
-(Optional) AWS region.  Defaults to "us-east-1"
+(Optional) AWS region.  Defaults to "us-east-1".
 ```
 aws_cwa_region: "us-east-1"
 ```
 
 ### aws_cwa_namespace
-The namespace in which your metrics will reside (e.g. 'myApplication')
+The namespace in which your metrics will reside (e.g. 'myApplication').
 ```
 aws_cwa_namespace: "myApplication"
 ```
@@ -70,10 +70,12 @@ aws_cwa_key_secret: (encrypted)SECRETKEYGOESHERE
 
 ### aws_cwa_cfgs
 Path (absolute, or relative to playbook) containing the .j2 templates for the CloudWatch Agent configs
+
 NOTE: These must be templates, as they necessarily contain {{ansible_hostname}}
+
 Only files with the .j2 extension will be processed.  The '.j2' extension will be removed.
 ```
-aws_cwa_cfgs: "group_files/my-application/dev"
+aws_cwa_cfgs: "group_files/awscwa_cfg/webserver-stg"
 ```
 
 
