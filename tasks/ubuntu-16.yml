@@ -101,6 +101,7 @@
       path: '/tmp/awscli-inst'
       state: 'absent'
   when: awscli_installed.stat.exists != True
+  ignore_errors: "{{ ansible_check_mode }}"
 
 - name: ensure log groups exist
   shell: |
