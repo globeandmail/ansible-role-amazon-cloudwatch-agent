@@ -110,6 +110,7 @@
     executable: '/bin/bash'
   register: create_log_groups
   with_items: "{{ aws_cwa_logfiles | default([]) }}"
+  run_once: true
   failed_when: create_log_groups.rc != 0 and create_log_groups.rc != 255
 
 - name: ensure retention policies are up to date
@@ -123,6 +124,7 @@
     executable: '/bin/bash'
   register: create_log_groups
   with_items: "{{ aws_cwa_logfiles | default([]) }}"
+  run_once: true
   failed_when: create_log_groups.rc != 0 and create_log_groups.rc != 255
 
 
