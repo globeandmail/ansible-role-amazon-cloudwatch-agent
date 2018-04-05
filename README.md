@@ -125,4 +125,5 @@ Author Information
 ------
 
 abarrett@globeandmail.com
-github.com/1adam
+
+https://github.com/1adam
