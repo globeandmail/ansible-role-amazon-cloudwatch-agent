@@ -36,27 +36,6 @@
   notify: restart amazon-cloudwatch-agent
   no_log: True
 
-#- name: Cloudwatch Update - make temp dir for installation files
-#  file:
-#    path: "/tmp/aws-cwa-inst"
-#    state: "directory"
-#  tag: cloudwatch-update
-#- name: Cloudwatch Update - download & unpack the latest cloudwatch agent .zip
-#  unarchive:
-#    remote_src: "yes"
-#    src: "https://s3.amazonaws.com/amazoncloudwatch-agent/linux/amd64/latest/AmazonCloudWatchAgent.zip"
-#    dest: "/tmp/aws-cwa-inst/"
-#  tag: cloudwatch-update
-#- name: Cloudwatch Update - run the installer
-#  shell: cd /tmp/aws-cwa-inst && ./install.sh
-#  notify: restart amazon-cloudwatch-agent
-#  tag: cloudwatch-update
-#- name: Cloudwatch Update - remove temp dir
-#  file:
-#    path: "/tmp/aws-cwa-inst/"
-#    state: "absent"
-#  tag: cloudwatch-update
-
 - name: Already installed?
   stat:
     path: /opt/aws/amazon-cloudwatch-agent
@@ -79,7 +58,7 @@
     file:
       path: "/tmp/aws-cwa-inst/"
       state: "absent"
-  when: (already_inst.stat.exists != True) or (install_latest is defined) 
+  when: (already_inst.stat.exists != True) or (aws_install_latest is defined) 
   ignore_errors: "{{ ansible_check_mode }}"
 
 - name: place cfgs, ie. amazon-cloudwatch-agent.(json|toml)
