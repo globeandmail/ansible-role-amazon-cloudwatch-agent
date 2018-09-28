@@ -42,7 +42,12 @@
   register: already_inst
 
 - block:
-  - name: make temp dir for installation files
+  - name: Remove common-toml
+    file: 
+      state: absent
+      path: /opt/aws/amazon-cloudwatch-agent/etc/common-config.toml
+
+   name: make temp dir for installation files
     file:
       path: "/tmp/aws-cwa-inst"
       state: "directory"
