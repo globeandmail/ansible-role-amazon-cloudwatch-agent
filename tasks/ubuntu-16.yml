@@ -37,15 +37,24 @@
   no_log: True
 
 - name: Already installed?
-  stat:
-    path: /opt/aws/amazon-cloudwatch-agent
+  apt:
+    name: amazon-cloudwatch-agent
+    state: present
+  ignore_errors: yes
   register: already_inst
 
 - block:
-  - name: Remove commontoml
-    file: 
-      state: absent
-      path: /opt/aws/amazon-cloudwatch-agent/etc/common-config.toml
+  - block:
+    - name: purge existing pkg if installed
+      apt:
+        name: amazon-cloudwatch-agent
+        state: absent
+        purge: yes
+    - name: purge dir tree if exists
+      file:
+        path: '/opt/aws/amazon-cloudwatch-agent'
+        state: absent
+    when: (already_inst|success)
   - name: make temp dir for installation files
     file:
       path: "/tmp/aws-cwa-inst"
@@ -62,7 +71,7 @@
     file:
       path: "/tmp/aws-cwa-inst/"
       state: "absent"
-  when: (already_inst.stat.exists != True) or (aws_install_latest is defined) 
+  when: (already_inst|failed) or (aws_install_latest is defined) 
   #ignore_errors: "{{ ansible_check_mode }}"
   ignore_errors: yes
 
@@ -131,14 +140,6 @@
   with_items: "{{ aws_cwa_logfiles | default([]) }}"
   run_once: true
   failed_when: create_log_groups.rc != 0 and create_log_groups.rc != 255
-
-
-- name: update start-amazon-cloudwatch-agent with our version (which avoids overwriting the toml)
-  copy:
-    src: "start-amazon-cloudwatch-agent"
-    dest: "/opt/aws/amazon-cloudwatch-agent/bin/start-amazon-cloudwatch-agent"
-    mode: 0755
-  notify: restart amazon-cloudwatch-agent
 
 - name: enable service on boot
   service:
