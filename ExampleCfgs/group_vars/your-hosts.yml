@@ -13,8 +13,6 @@ aws_cwa_logfiles:
     log_stream_name: '{{ansible_hostname}}/syslog'
     log_retention: '14'
     timestamp_format: '%b %-d %H:%M:%S'
-    timestamp_layout: 'Jan 2 15:04:05'
-    timestamp_regex: '^(\\w{3}\\s+\\d{1,2} \\d{2}:\\d{2}:\\d{2}).*$'
     timezone: "LOCAL"
 aws_cwa_key_access: !vault |
           $ANSIBLE_VAULT;1.1;AES256
