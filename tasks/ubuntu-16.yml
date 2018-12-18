@@ -75,13 +75,11 @@
   #ignore_errors: "{{ ansible_check_mode }}"
   ignore_errors: yes
 
-- name: place cfgs, ie. amazon-cloudwatch-agent.(json|toml)
+- name: place cfgs, ie. amazon-cloudwatch-agent.json
   template:
-    src: "{{ item }}"
-    dest: "/opt/aws/amazon-cloudwatch-agent/etc/{{ item | basename | regex_replace('\\.j2$', '') }}"
+    src: "{{ aws_cwa_cfgs }}/amazon-cloudwatch-agent.json.j2"
+    dest: "/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json"
     mode: 0644
-  with_fileglob:
-  - "{{aws_cwa_cfgs}}/*.j2"
   notify: restart amazon-cloudwatch-agent
 
 - name: check if awscli bundle is already installed
