@@ -66,9 +66,7 @@ aws_cwa_key_secret: (encrypted)SECRETKEYGOESHERE
 #### It's recommended that you declare `aws_cwa_key_access` and `aws_cwa_key_secret` in either a vault-encypted var file, or as vault-encrypted strings within a var file.
 
 ### aws_cwa_cfgs
-Path (absolute, or relative to playbook) containing the template named "amazon-cloudwatch-agent.json.j2" for the CloudWatch Agent config
-
-NOTE: This must be a template, as it necessarily contains {{ansible_hostname}}
+Path (absolute, or relative to playbook) containing the TEMPLATE named "amazon-cloudwatch-agent.json.j2" for the CloudWatch Agent config
 
 Only "amazon-cloudwatch-agent.json.j2" in the given directory will be processed.  The '.j2' extension will be removed.
 ```
