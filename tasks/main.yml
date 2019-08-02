@@ -1,7 +1,0 @@
----
-- name: Must be Ubuntu (12, 14, or 16) and 64-bit
-  fail:
-    msg: "This role is intended for use only with Ubuntu 12, 64-bit"
-  when: (ansible_architecture != 'x86_64') or ((ansible_distribution|lower != 'ubuntu') or (ansible_distribution_major_version not in ['12','14','16']))
-
-- include_tasks: "{{ansible_distribution|lower}}-{{ansible_distribution_major_version}}.yml"
