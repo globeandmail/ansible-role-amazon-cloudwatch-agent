@@ -102,6 +102,8 @@
     aws_secret_key: "{{ aws_secret_key | default(lookup('env','AWS_SECRET_ACCESS_KEY')) }}"
     region: "{{ aws_region }}"
   with_items: "{{ aws_cwa_logfiles | default([]) }}"
+  loop_control:
+    label: "{{ item.log_group_name }}"
   delegate_to: localhost
 
 - name: Enable service on boot
