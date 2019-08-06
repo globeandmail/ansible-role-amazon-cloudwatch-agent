@@ -86,64 +86,25 @@
     mode: 0644
   notify: restart amazon-cloudwatch-agent
 
-- name: check if awscli bundle is already installed
-  stat:
-    path: '/usr/local/bin/aws'
-  register: awscli_installed
+- name: Install Python modules
+  become: yes
+  pip:
+    name:
+      - boto3
+  delegate_to: localhost
 
-- name: Install AWSCLI bundle
-  block:
-  - name: mkdir temp for awscli install
-    file:
-      path: '/tmp/awscli-inst'
-      state: 'directory'
-      owner: 'root'
-      group: 'root'
-      mode: '0700'
-
-  - name: download awscli bundle
-    unarchive:
-      remote_src: 'yes'
-      src: 'https://s3.amazonaws.com/aws-cli/awscli-bundle.zip'
-      dest: '/tmp/awscli-inst/'
-
-  - name: run awscli install script
-    shell: ./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws
-    args:
-      chdir: '/tmp/awscli-inst/'
-
-  - name: rm temp for awscli install
-    file:
-      path: '/tmp/awscli-inst'
-      state: 'absent'
-  when: awscli_installed.stat.exists != True
-  ignore_errors: "{{ ansible_check_mode }}"
-
-- name: ensure log groups exist
-  shell: |
-    aws --profile AmazonCloudWatchAgent logs create-log-group --log-group-name {{item.log_group_name}}{% if item.log_group_tags is defined and item.log_group_tags|length > 0 %} --tags {% for lgti in item.log_group_tags %}{% for tK in lgti %}{{tK}}={{ lgti[ tK ] }}{% endfor %}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}{{ "" }}
-  args:
-    executable: '/bin/bash'
-  register: create_log_groups
+- name: Ensure log groups exist
+  cloudwatchlogs_log_group:
+    log_group_name: "{{ item.log_group_name }}"
+    retention: "{{item.log_retention|int}}"
+    tags: "{{item.log_group_tags}}"
+    aws_access_key: "{{ aws_access_key | default(lookup('env','AWS_ACCESS_KEY_ID')) }}"
+    aws_secret_key: "{{ aws_secret_key | default(lookup('env','AWS_SECRET_ACCESS_KEY')) }}"
+    region: "{{ aws_region }}"
   with_items: "{{ aws_cwa_logfiles | default([]) }}"
-  run_once: true
-  failed_when: create_log_groups.rc != 0 and create_log_groups.rc != 255
+  delegate_to: localhost
 
-- name: ensure retention policies are up to date
-  shell: |
-    {% if item.log_retention|default('') != '' %}
-    aws --profile AmazonCloudWatchAgent logs put-retention-policy --log-group-name {{item.log_group_name}} --retention-in-days {{item.log_retention}}
-    {% else %}
-    aws --profile AmazonCloudWatchAgent logs delete-retention-policy --log-group-name {{item.log_group_name}}
-    {% endif %}
-  args:
-    executable: '/bin/bash'
-  register: create_log_groups
-  with_items: "{{ aws_cwa_logfiles | default([]) }}"
-  run_once: true
-  failed_when: create_log_groups.rc != 0 and create_log_groups.rc != 255
-
-- name: enable service on boot
+- name: Enable service on boot
   service:
     name: "amazon-cloudwatch-agent"
     enabled: "yes"
