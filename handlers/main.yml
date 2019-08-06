@@ -3,4 +3,4 @@
   service:
     name: "amazon-cloudwatch-agent"
     state: "restarted"
-    sleep: 15
+    #sleep: 15

@@ -2,3 +2,5 @@
 aws_cwa_region: 'us-east-1'
 aws_cwa_disk_monitor_paths:
   - "/"
+
+aws_cwa_cfgs: generic-amazon-cloudwatch-agent.json.j2

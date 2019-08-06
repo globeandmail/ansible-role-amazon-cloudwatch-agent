@@ -36,8 +36,13 @@
   notify: restart amazon-cloudwatch-agent
   no_log: True
 
+- name: Install pre-requisits
+  package:
+    name: unzip
+    state: present
+
 - name: Already installed?
-  apt:
+  package:
     name: amazon-cloudwatch-agent
     state: present
   ignore_errors: yes
@@ -46,7 +51,7 @@
 - block:
   - block:
     - name: purge existing pkg if installed
-      apt:
+      package:
         name: amazon-cloudwatch-agent
         state: absent
         purge: yes
@@ -54,7 +59,7 @@
       file:
         path: '/opt/aws/amazon-cloudwatch-agent'
         state: absent
-    when: (already_inst|success)
+    when: (already_inst is success)
   - name: make temp dir for installation files
     file:
       path: "/tmp/aws-cwa-inst"
@@ -71,13 +76,12 @@
     file:
       path: "/tmp/aws-cwa-inst/"
       state: "absent"
-  when: (already_inst|failed) or (aws_install_latest is defined) 
+  when: (already_inst is failed) or (aws_install_latest is defined) 
   #ignore_errors: "{{ ansible_check_mode }}"
-  ignore_errors: yes
 
 - name: place cfgs, ie. amazon-cloudwatch-agent.json
   template:
-    src: "{{ aws_cwa_cfgs }}/amazon-cloudwatch-agent.json.j2"
+    src: "{{ aws_cwa_cfgs }}"
     dest: "/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json"
     mode: 0644
   notify: restart amazon-cloudwatch-agent
