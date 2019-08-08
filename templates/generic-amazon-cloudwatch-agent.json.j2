@@ -15,8 +15,10 @@
                         "file_path": "{{logfile.file_path}}",
                         "log_group_name": "{{logfile.log_group_name}}",
                         "log_stream_name": "{{logfile.log_stream_name}}",
+{% if logfile.multi_line_start_pattern != "False" %}
+                        "multi_line_start_pattern": "{{logfile.multi_line_start_pattern}}",
+{% endif %}
                         "timestamp_format": "{{logfile.timestamp_format}}",
-                        "multi_line_start_pattern": "{timestamp_format}",
                         "timezone": "{{logfile.timezone}}"
                     }{%if not loop.last %},{% endif %}
 
