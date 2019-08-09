@@ -1,0 +1,30 @@
+---
+
+- name: Ensure log groups {{ item.log_group_name }} exist 
+  cloudwatchlogs_log_group:
+    log_group_name: "{{ item.log_group_name }}"
+    retention: "{{item.log_retention|int}}"
+    tags: "{{item.log_group_tags}}"
+    aws_access_key: "{{ aws_access_key | default(lookup('env','AWS_ACCESS_KEY_ID')) }}"
+    aws_secret_key: "{{ aws_secret_key | default(lookup('env','AWS_SECRET_ACCESS_KEY')) }}"
+    region: "{{ aws_region }}"
+  delegate_to: localhost
+
+- name: Ensure log group {{ item.log_group_name }} matrics exist
+  cloudwatchlogs_log_group_metric_filter:
+    log_group_name: "{{ item.log_group_name }}"
+    state: present
+    filter_name: "{{ filter.name }}"
+    filter_pattern: "{{ filter.pattern }}"
+    metric_transformation:
+      metric_name: "{{ filter.metric_transformation.metric_name }}"
+      metric_namespace: "{{ aws_cwa_namespace }}"
+      metric_value: "{{ filter.metric_transformation.metric_value }}"
+    aws_access_key: "{{ aws_access_key | default(lookup('env','AWS_ACCESS_KEY_ID')) }}"
+    aws_secret_key: "{{ aws_secret_key | default(lookup('env','AWS_SECRET_ACCESS_KEY')) }}"
+    region: "{{ aws_region }}"
+  with_items: "{{ item.filters | default([]) }}"
+  loop_control:
+    loop_var: filter
+    label: "{{ item.log_group_name }}"
+  delegate_to: localhost

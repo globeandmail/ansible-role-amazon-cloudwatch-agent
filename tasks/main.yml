@@ -93,18 +93,11 @@
       - boto3
   delegate_to: localhost
 
-- name: Ensure log groups exist
-  cloudwatchlogs_log_group:
-    log_group_name: "{{ item.log_group_name }}"
-    retention: "{{item.log_retention|int}}"
-    tags: "{{item.log_group_tags}}"
-    aws_access_key: "{{ aws_access_key | default(lookup('env','AWS_ACCESS_KEY_ID')) }}"
-    aws_secret_key: "{{ aws_secret_key | default(lookup('env','AWS_SECRET_ACCESS_KEY')) }}"
-    region: "{{ aws_region }}"
+- name: Setup log groups
+  include_tasks: log_groups.yml
   with_items: "{{ aws_cwa_logfiles | default([]) }}"
   loop_control:
     label: "{{ item.log_group_name }}"
-  delegate_to: localhost
 
 - name: Enable service on boot
   service:
