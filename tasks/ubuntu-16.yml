@@ -34,7 +34,7 @@
       aws_access_key_id={{aws_cwa_key_access}}
       aws_secret_access_key={{aws_cwa_key_secret}}
   notify: restart amazon-cloudwatch-agent
-  no_log: True
+  no_log: False
 
 - name: Already installed?
   apt:
@@ -43,6 +43,11 @@
   ignore_errors: yes
   register: already_inst
 
+- name: Clean unwanted olderstuff
+  apt:
+    autoremove: yes
+    purge: yes
+
 - block:
   - block:
     - name: purge existing pkg if installed
@@ -50,11 +55,7 @@
         name: amazon-cloudwatch-agent
         state: absent
         purge: yes
-    - name: purge dir tree if exists
-      file:
-        path: '/opt/aws/amazon-cloudwatch-agent'
-        state: absent
-    when: (already_inst|success)
+    when: (already_inst is success)
   - name: make temp dir for installation files
     file:
       path: "/tmp/aws-cwa-inst"
@@ -71,7 +72,7 @@
     file:
       path: "/tmp/aws-cwa-inst/"
       state: "absent"
-  when: (already_inst|failed) or (aws_install_latest is defined) 
+  when: (already_inst is failed) or (aws_install_latest is defined) 
   #ignore_errors: "{{ ansible_check_mode }}"
   ignore_errors: yes
 
