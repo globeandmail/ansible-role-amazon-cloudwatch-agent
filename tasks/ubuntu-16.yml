@@ -54,7 +54,7 @@
       file:
         path: '/opt/aws/amazon-cloudwatch-agent'
         state: absent
-    when: (already_inst|success)
+    when: (already_inst is success)
   - name: make temp dir for installation files
     file:
       path: "/tmp/aws-cwa-inst"
@@ -71,7 +71,7 @@
     file:
       path: "/tmp/aws-cwa-inst/"
       state: "absent"
-  when: (already_inst|failed) or (aws_install_latest is defined) 
+  when: (already_inst is failed) or (aws_install_latest is defined) 
   #ignore_errors: "{{ ansible_check_mode }}"
   ignore_errors: yes
 
