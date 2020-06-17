@@ -1,0 +1,16 @@
+---
+dependencies: []
+
+galaxy_info:
+  author: Jeremy Poulter
+  description: Webgains role for running common linux and AWS tasks.
+  company: "Webgains LTD"
+  license: "All rights reserved"
+  min_ansible_version: 2.8
+  platforms:
+    - name: Centos
+      versions:
+        - all
+    - name: Ubuntu
+      versions:
+        - all
