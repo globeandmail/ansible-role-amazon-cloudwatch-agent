@@ -1,0 +1,160 @@
+---
+- name: Ensure /root/.aws/ is there
+  file:
+    path: '/root/.aws/'
+    state: 'directory'
+    mode: '0700'
+    owner: 'root'
+    group: 'root'
+
+- name: Add AWS CWA profile to /root/.aws/config
+  blockinfile:
+    path: '/root/.aws/config'
+    create: 'yes'
+    owner: 'root'
+    group: 'root'
+    mode: 0600
+    marker: "# {mark} ansible aws-cwa cfg"
+    block: |
+      [profile AmazonCloudWatchAgent]
+      output = json
+      region = {{aws_cwa_region|default('us-east-1')}}
+  notify: restart amazon-cloudwatch-agent
+
+- name: Add AWS CWA profile to /root/.aws/credentials
+  blockinfile:
+    path: '/root/.aws/credentials'
+    create: 'yes'
+    owner: 'root'
+    group: 'root'
+    mode: 0600
+    marker: "# {mark} ansible aws-cwa cfg"
+    block: |
+      [AmazonCloudWatchAgent]
+      aws_access_key_id={{aws_cwa_key_access}}
+      aws_secret_access_key={{aws_cwa_key_secret}}
+  notify: restart amazon-cloudwatch-agent
+  no_log: False
+
+- name: Already installed?
+  apt:
+    name: amazon-cloudwatch-agent
+    state: present
+  ignore_errors: yes
+  register: already_inst
+
+- name: Clean unwanted olderstuff
+  apt:
+    autoremove: yes
+    purge: yes
+
+- block:
+  - block:
+    - name: purge existing pkg if installed
+      apt:
+        name: amazon-cloudwatch-agent
+        state: absent
+        purge: yes
+    when: (already_inst is success)
+  - name: make temp dir for installation files
+    file:
+      path: "/tmp/aws-cwa-inst"
+      state: "directory"
+  - name: download & unpack the latest cloudwatch agent .zip
+    unarchive:
+      remote_src: "yes"
+      src: "https://s3.amazonaws.com/amazoncloudwatch-agent/linux/amd64/latest/AmazonCloudWatchAgent.zip"
+      dest: "/tmp/aws-cwa-inst/"
+  - name: run the installer
+    shell: cd /tmp/aws-cwa-inst && echo 'N' | ./install.sh
+    notify: restart amazon-cloudwatch-agent
+  - name: remove temp dir
+    file:
+      path: "/tmp/aws-cwa-inst/"
+      state: "absent"
+  when: (already_inst is failed) or (aws_install_latest is defined) 
+  #ignore_errors: "{{ ansible_check_mode }}"
+  ignore_errors: yes
+
+- name: place cfgs, ie. amazon-cloudwatch-agent.json
+  template:
+    src: "{{ aws_cwa_cfgs }}/amazon-cloudwatch-agent.json.j2"
+    dest: "/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json"
+    mode: 0644
+  notify: restart amazon-cloudwatch-agent
+
+- name: check if awscli bundle is already installed
+  stat:
+    path: '/usr/local/bin/aws'
+  register: awscli_installed
+
+- name: Install AWSCLI bundle
+  block:
+  - name: mkdir temp for awscli install
+    file:
+      path: '/tmp/awscli-inst'
+      state: 'directory'
+      owner: 'root'
+      group: 'root'
+      mode: '0700'
+
+  - name: download awscli bundle
+    unarchive:
+      remote_src: 'yes'
+      src: 'https://s3.amazonaws.com/aws-cli/awscli-bundle.zip'
+      dest: '/tmp/awscli-inst/'
+
+  - name: run awscli install script
+    shell: ./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws
+    args:
+      chdir: '/tmp/awscli-inst/'
+
+  - name: rm temp for awscli install
+    file:
+      path: '/tmp/awscli-inst'
+      state: 'absent'
+  when: awscli_installed.stat.exists != True
+  ignore_errors: "{{ ansible_check_mode }}"
+
+- name: ensure log groups exist
+  shell: |
+    aws --profile AmazonCloudWatchAgent logs create-log-group --log-group-name {{item.log_group_name}}{% if item.log_group_tags is defined and item.log_group_tags|length > 0 %} --tags {% for lgti in item.log_group_tags %}{% for tK in lgti %}{{tK}}={{ lgti[ tK ] }}{% endfor %}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}{{ "" }}
+  args:
+    executable: '/bin/bash'
+  register: create_log_groups
+  with_items: "{{ aws_cwa_logfiles | default([]) }}"
+  run_once: true
+  failed_when: create_log_groups.rc != 0 and create_log_groups.rc != 255
+
+- name: ensure retention policies are up to date
+  shell: |
+    {% if item.log_retention|default('') != '' %}
+    aws --profile AmazonCloudWatchAgent logs put-retention-policy --log-group-name {{item.log_group_name}} --retention-in-days {{item.log_retention}}
+    {% else %}
+    aws --profile AmazonCloudWatchAgent logs delete-retention-policy --log-group-name {{item.log_group_name}}
+    {% endif %}
+  args:
+    executable: '/bin/bash'
+  register: create_log_groups
+  with_items: "{{ aws_cwa_logfiles | default([]) }}"
+  run_once: true
+  failed_when: create_log_groups.rc != 0 and create_log_groups.rc != 255
+
+- name: enable service on boot
+  service:
+    name: "amazon-cloudwatch-agent"
+    enabled: "yes"
+
+- name: Add log rotation for amazon-cloudwatch-agent.log
+  copy:
+    dest: '/etc/logrotate.d/aws-cwa'
+    owner: 'root'
+    group: 'root'
+    content: |
+        /opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log {
+            size 50M
+            rotate 5
+            compress
+            missingok
+            copytruncate
+        }
